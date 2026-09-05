@@ -37,14 +37,14 @@ def get_vinyls():
 
 
 @app.post('/vinyl', tags=[vinyl_tag], responses={"201": VinylViewSchema, "400": ErrorSchema})
-def add_vinyl(form: VinylSchema):
+def add_vinyl(body: VinylSchema):
     """Adds a new vinyl record to the collection."""
     vinyl = Vinyl(
-        name=form.name,
-        genre=form.genre,
-        year=form.year,
-        artist=form.artist,
-        conservation_state=form.conservation_state
+        name=body.name,
+        genre=body.genre,
+        year=body.year,
+        artist=body.artist,
+        conservation_state=body.conservation_state
     )
     try:
         session = Session()
@@ -83,22 +83,23 @@ def get_vinyl(query: VinylSearchSchema):
         return {"mesg": f"Error searching for vinyl: {str(e)}"}, 400
 
 
-@app.put('/vinyl', tags=[vinyl_tag], responses={"200": VinylViewSchema, "404": ErrorSchema, "400": ErrorSchema})
-def update_vinyl(form: VinylUpdateSchema):
+@app.put('/vinyl/<int:id>', tags=[vinyl_tag], responses={"200": VinylViewSchema, "404": ErrorSchema, "400": ErrorSchema})
+def update_vinyl(path: VinylPath, body: VinylUpdateSchema):
     """Updates an existing vinyl's information by ID."""
     try:
         session = Session()
-        vinyl = session.query(Vinyl).filter(Vinyl.id == form.id).first()
+        # Usa o ID que veio na URL através do path.vinyl_id
+        vinyl = session.query(Vinyl).filter(Vinyl.id == path.id).first()
         
         if not vinyl:
             session.close()
             return {"mesg": "Vinyl not found for update."}, 404
             
-        vinyl.name = form.name
-        vinyl.genre = form.genre
-        vinyl.year = form.year
-        vinyl.artist = form.artist
-        vinyl.conservation_state = form.conservation_state
+        vinyl.name = body.name
+        vinyl.genre = body.genre
+        vinyl.year = body.year
+        vinyl.artist = body.artist
+        vinyl.conservation_state = body.conservation_state
         
         session.commit()
         result = present_vinyl(vinyl)
@@ -108,12 +109,13 @@ def update_vinyl(form: VinylUpdateSchema):
         session.rollback()
         session.close()
         return {"mesg": f"Could not update vinyl: {str(e)}"}, 400
-
-
-@app.delete('/vinyl', tags=[vinyl_tag], responses={"200": VinylDeleteSchema, "404": ErrorSchema})
-def delete_vinyl(query: VinylPath):
+    
+    
+    
+@app.delete('/vinyl/<int:id>', tags=[vinyl_tag], responses={"200": VinylViewSchema, "404": ErrorSchema})
+def delete_vinyl(path: VinylPath):
     """Removes a vinyl from the collection using its ID."""
-    vinyl_id = query.id
+    vinyl_id = path.id
     try:
         session = Session()
         vinyl = session.query(Vinyl).filter(Vinyl.id == vinyl_id).first()

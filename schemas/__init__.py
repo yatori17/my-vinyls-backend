@@ -7,6 +7,6 @@ from schemas.vinyl import (
     present_vinyl,
     VinylUpdateSchema,
     ListVinylsSchema,
-    VinylDeleteSchema
+    VinylDeleteSchema,
 )
 from schemas.error import ErrorSchema
