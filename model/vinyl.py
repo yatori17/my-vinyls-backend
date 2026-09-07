@@ -13,10 +13,12 @@ class Vinyl(Base):
     year = Column(Integer, nullable=False)
     artist = Column(String(140), nullable=False)
     conservation_state = Column(String(140), nullable=False)
+    photo_url = Column(String(300))
     created_datetime = Column(DateTime, default=datetime.now)
     
     def __init__(self, name: str, genre: str, year: int,
-                 artist: str, conservation_state: str, 
+                 artist: str, conservation_state: str,
+                 photo_url: Union[str, None] = None,
                  created_datetime: Union[datetime, None] = None):
         """
         Create a Vinyl
@@ -27,6 +29,7 @@ class Vinyl(Base):
             year: Release year;
             artist: Artist name;
             conservation_state: Conservation state;
+            photo_url: Vinyl's url;
             created_datetime: Created Datetime;
         """
         self.name = name
@@ -34,5 +37,6 @@ class Vinyl(Base):
         self.year = year
         self.artist = artist
         self.conservation_state = conservation_state
+        self.photo_url = photo_url
         if created_datetime:
             self.created_datetime = created_datetime

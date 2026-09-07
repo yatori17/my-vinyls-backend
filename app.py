@@ -46,7 +46,8 @@ def add_vinyl(body: VinylSchema):
         genre=body.genre,
         year=body.year,
         artist=body.artist,
-        conservation_state=body.conservation_state
+        conservation_state=body.conservation_state,
+        photo_url=body.photo_url
     )
     try:
         session = Session()
@@ -102,6 +103,7 @@ def update_vinyl(path: VinylPath, body: VinylUpdateSchema):
         vinyl.year = body.year
         vinyl.artist = body.artist
         vinyl.conservation_state = body.conservation_state
+        vinyl.photo_url=body.photo_url
         
         session.commit()
         result = present_vinyl(vinyl)

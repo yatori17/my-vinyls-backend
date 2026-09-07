@@ -8,6 +8,7 @@ class VinylSchema(BaseModel):
     year: int
     artist: str
     conservation_state: str
+    photo_url: str
 
     class Config:
         orm_mode = True
@@ -22,6 +23,7 @@ def present_vinyl(vinyl: Vinyl):
         "year": vinyl.year,
         "artist": vinyl.artist,
         "conservation_state": vinyl.conservation_state,
+        "photo_url": vinyl.photo_url,
         "created_datetime": vinyl.created_datetime.isoformat() if vinyl.created_datetime else None
     }
 
@@ -40,6 +42,7 @@ def present_vinyls(vinyls: List[Vinyl]):
             "year": vinyl.year,
             "artist": vinyl.artist,
             "conservation_state": vinyl.conservation_state,
+            "photo_url": vinyl.photo_url,
             "created_datetime": vinyl.created_datetime.isoformat() if vinyl.created_datetime else None
         })
     return {"vinyls": result}
@@ -64,7 +67,7 @@ class VinylViewSchema(BaseModel):
     artist: str
     conservation_state: str
     created_datetime: Optional[str]
-
+    photo_url: Optional[str]
 
 class VinylUpdateSchema(BaseModel):
     id: int
@@ -73,7 +76,7 @@ class VinylUpdateSchema(BaseModel):
     year: int
     artist: str
     conservation_state: str
-
+    photo_url: Optional[str]
 
 class VinylPath(BaseModel):
     id: int

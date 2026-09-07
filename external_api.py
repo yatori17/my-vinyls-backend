@@ -1,7 +1,7 @@
 import requests
 from flask import request, jsonify
 
-DISCOGS_TOKEN = 
+DISCOGS_TOKEN = "YOUR_DISCOGS_TOKEN_HERE"
 
 def init_external_routes(app, vinyl_tag, ErrorSchema, ListExternalVinylSchema):
 
