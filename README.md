@@ -25,7 +25,7 @@ API REST desenvolvida em Flask para gerenciamento de uma coleção pessoal de vi
 1. Clone o repositório:
 ```bash
    git clone <url-do-repositorio>
-   cd vinyl-api
+   cd my-vinyls-backend
 ```
 
 2. Crie e ative um ambiente virtual:
@@ -40,22 +40,26 @@ API REST desenvolvida em Flask para gerenciamento de uma coleção pessoal de vi
    pip install -r requirements.txt
 ```
 
-4. Configure as variáveis de ambiente. Crie um arquivo `.env` na raiz do projeto:
+4. Configure a variável de ambiente do Discogs (substitua pelo seu token pessoal obtido em discogs.com/settings/developers):
 
-DISCOGS_TOKEN=seu_token_do_discogs_aqui
+# No Windows (PowerShell)
+$env:DISCOGS_TOKEN="seu_token_do_discogs_aqui"
+
+# No Linux/Mac
+export DISCOGS_TOKEN="seu_token_do_discogs_aqui"
 
 5. Execute a aplicação:
 ```bash
    python app.py
 ```
 
-A API estará disponível em `http://localhost:5000`.
+A API estará disponível em `http://localhost:5000`. A documentação interativa (Swagger) estará disponível em `http://localhost:5000/openapi`.
 
 ## Executando com Docker
 
 ```bash
-docker build -t vinyl-api .
-docker run -p 5000:5000 --env-file .env vinyl-api
+docker build -t vinyl-backend .
+docker run -d -p 5000:5000 -e DISCOGS_TOKEN="seu_token_do_discogs_aqui" --name vinyl-backend-container vinyl-backend
 ```
 
 ## Rotas disponíveis
