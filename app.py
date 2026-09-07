@@ -5,6 +5,7 @@ from sqlalchemy.exc import IntegrityError
 
 from model import Session, Vinyl
 from schemas import *
+from external_api import init_external_routes
 
 info = Info(title="Virtual Digging API", version="1.0.0")
 app = OpenAPI(__name__, info=info)
@@ -13,6 +14,7 @@ CORS(app)
 # Defining tags for Swagger documentation
 home_tag = Tag(name="Documentation", description="API Documentation")
 vinyl_tag = Tag(name="Vinyl", description="Management of the vinyl record collection")
+init_external_routes(app, vinyl_tag, ErrorSchema, ListExternalVinylSchema)
 
 @app.get('/', tags=[home_tag])
 def home():

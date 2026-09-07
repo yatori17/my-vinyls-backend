@@ -1,32 +1,13 @@
 from pydantic import BaseModel
-from typing import List, Optional, Literal
+from typing import List, Optional
 from model.vinyl import Vinyl
-
-GenreLiteral = Literal[
-    "Rock",
-    "Pop",
-    "Jazz",
-    "Electronic",
-    "Classical",
-    "Hip Hop",
-    "Metal",
-    "Outro"
-]
-
-ConservationStateLiteral = Literal[
-    "Novo (M)",
-    "Excelente (NM)",
-    "Muito Bom (VG+)",
-    "Bom (VG)",
-    "Regular (G)"
-]
 
 class VinylSchema(BaseModel):
     name: str
-    genre: Optional[GenreLiteral] = None
+    genre: Optional[str] = None
     year: int
     artist: str
-    conservation_state: ConservationStateLiteral
+    conservation_state: str
 
     class Config:
         orm_mode = True
@@ -88,10 +69,10 @@ class VinylViewSchema(BaseModel):
 class VinylUpdateSchema(BaseModel):
     id: int
     name: str
-    genre: Optional[GenreLiteral]
+    genre: Optional[str]
     year: int
     artist: str
-    conservation_state: ConservationStateLiteral
+    conservation_state: str
 
 
 class VinylPath(BaseModel):

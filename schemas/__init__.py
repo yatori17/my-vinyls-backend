@@ -9,4 +9,7 @@ from schemas.vinyl import (
     ListVinylsSchema,
     VinylDeleteSchema,
 )
+from schemas.external_vinyl import (
+    ExternalVinylViewSchema, ListExternalVinylSchema
+)
 from schemas.error import ErrorSchema
