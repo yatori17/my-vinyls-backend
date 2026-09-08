@@ -97,10 +97,12 @@ docker run -d -p 5000:5000 -e DISCOGS_TOKEN="seu_token_do_discogs_aqui" --name v
 | DELETE | `/vinyl/<id>`      | Remove um disco                     |
 | GET    | `/external-vinyl`  | Busca álbuns na API do Discogs      |
 
-## API Externa
+## API Externa (Discogs API)
 
-Este projeto consome a [Discogs API](https://www.discogs.com/developers) para busca de álbuns.
+Este projeto consome a [Discogs API Oficial](https://www.discogs.com/developers) para enriquecer o sistema com dados reais de discos de vinil.
 
-- **Autenticação**: requer um token pessoal (gratuito), obtido em [discogs.com/settings/developers](https://www.discogs.com/settings/developers)
-- **Licença de uso**: gratuita para uso pessoal/não comercial, conforme os [termos da Discogs API](https://www.discogs.com/developers)
-- **Rota utilizada**: `GET /database/search` (busca de releases por nome/artista)
+- **Documentação Oficial**: [Discogs Developers Documentation](https://www.discogs.com/developers/)
+- **Autenticação**: Requer um token de acesso pessoal (gerado gratuitamente em [discogs.com/settings/developers](https://www.discogs.com/settings/developers)), enviado nos headers das requisições.
+- **Licença de Uso**: Gratuita para desenvolvimento e uso não comercial, sujeita aos [Termos de Serviço da Discogs](https://www.discogs.com/developers).
+- **Método/Rota Utilizado na Aplicação**:
+  - `GET /database/search`: Utilizada para realizar a busca e o autocomplete de álbuns e artistas em tempo real, filtrando os resultados por título, artista e formato de vinil.
