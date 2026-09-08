@@ -2,6 +2,31 @@
 
 API REST desenvolvida em Flask para gerenciamento de uma coleção pessoal de vinis, incluindo integração com a API externa do Discogs para busca de álbuns.
 
+## Arquitetura da Aplicação (Cenário 1.1)
+
+```mermaid
+flowchart LR
+    subgraph Browser
+        A[Interface Front-End<br/>Angular + Nginx]
+    end
+
+    subgraph Backend Container
+        B[API Back-End<br/>Flask + Python]
+    end
+
+    subgraph Database
+        C[(SQLite)]
+    end
+
+    subgraph External API
+        D[API Externa<br/>Discogs API]
+    end
+
+    A -->|HTTP / REST<br/>GET, POST, PUT, DELETE| B
+    B -->|Consulta / Dados| C
+    B -->|Busca Externa| D
+```
+
 ## Funcionalidades
 
 - CRUD completo de discos de vinil (criar, listar, atualizar, remover)
