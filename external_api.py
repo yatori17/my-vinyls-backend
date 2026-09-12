@@ -4,6 +4,9 @@ from flask import request, jsonify
 
 DISCOGS_TOKEN = os.getenv("DISCOGS_TOKEN", "")
 
+if not DISCOGS_TOKEN:
+    print("Aviso: DISCOGS_TOKEN não foi configurado no ambiente.")
+
 def init_external_routes(app, vinyl_tag, ErrorSchema, ListExternalVinylSchema):
 
 
@@ -37,8 +40,6 @@ def init_external_routes(app, vinyl_tag, ErrorSchema, ListExternalVinylSchema):
                     "genre": item.get('genre', []),
                     "cover_image": item.get('cover_image')
                 })
-
-            # Retorna como um dicionário contendo a chave "results" que mapeia para o schema
             return {"results": results}, 200
 
         except Exception as e:
