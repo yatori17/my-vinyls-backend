@@ -10,6 +10,6 @@ from schemas.vinyl import (
     VinylDeleteSchema,
 )
 from schemas.external_vinyl import (
-    ExternalVinylViewSchema, ListExternalVinylSchema
+    ExternalVinylViewSchema, ListExternalVinylSchema, VinylSearchQuery
 )
 from schemas.error import ErrorSchema

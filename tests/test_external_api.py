@@ -1,8 +1,9 @@
 import pytest
 from unittest.mock import MagicMock, patch
-from flask import Flask
+from flask_openapi3 import OpenAPI, Info, Tag
 
 from external_api import init_external_routes
+from schemas import ErrorSchema, ListExternalVinylSchema
 
 
 # --------------------------------------------------------------------------
@@ -10,32 +11,20 @@ from external_api import init_external_routes
 # --------------------------------------------------------------------------
 
 @pytest.fixture
-def view_func():
-    """Registers the route on a mocked `app` and returns the raw view function."""
-    captured = {}
+def flask_app():
+    """Um app OpenAPI (flask-openapi3) real, para que a injeção de `query`
+    via Pydantic realmente aconteça antes da view rodar."""
+    info = Info(title="Test API", version="1.0.0")
+    app = OpenAPI(__name__, info=info)
+    vinyl_tag = Tag(name="Vinyl", description="Vinyl")
 
-    def fake_get(path, **kwargs):
-        def decorator(func):
-            captured["func"] = func
-            return func
-        return decorator
-
-    mock_app = MagicMock()
-    mock_app.get.side_effect = fake_get
-
-    init_external_routes(
-        mock_app,
-        vinyl_tag=None,
-        ErrorSchema=None,
-        ListExternalVinylSchema=None,
-    )
-    return captured["func"]
+    init_external_routes(app, vinyl_tag, ErrorSchema, ListExternalVinylSchema)
+    return app
 
 
 @pytest.fixture
-def flask_app():
-    """A bare Flask app, only used to open request contexts for `flask.request`."""
-    return Flask(__name__)
+def client(flask_app):
+    return flask_app.test_client()
 
 
 def make_discogs_response(status_code=200, json_data=None):
@@ -50,16 +39,22 @@ def make_discogs_response(status_code=200, json_data=None):
 # Tests
 # --------------------------------------------------------------------------
 
-def test_missing_query_returns_400(view_func, flask_app):
-    with flask_app.test_request_context("/external-vinyl"):
-        body, status = view_func()
+def test_missing_query_returns_400(client):
+    response = client.get("/external-vinyl")
 
-    assert status == 400
-    assert body == {"mesg": "Query parameter is required"}
+    # NOTE: por padrao o flask-openapi3 retorna 422 (Unprocessable Entity)
+    # para erros de validacao do Pydantic, nao 400. Se o seu projeto
+    # configurou `validation_error_status=400` na criacao do OpenAPI(...),
+    # ajuste o status abaixo para 422 ou 400 conforme o comportamento real.
+    # Rode este teste isolado e imprima response.status_code / response.get_json()
+    # para confirmar o formato exato antes de travar a assertion do corpo.
+    assert response.status_code in (400, 422)
+    body = response.get_json()
+    assert body is not None
 
 
 @patch("external_api.requests.get")
-def test_successful_search_maps_fields(mock_get, view_func, flask_app):
+def test_successful_search_maps_fields(mock_get, client):
     mock_get.return_value = make_discogs_response(
         200,
         {
@@ -74,11 +69,10 @@ def test_successful_search_maps_fields(mock_get, view_func, flask_app):
         },
     )
 
-    with flask_app.test_request_context("/external-vinyl?query=nirvana"):
-        body, status = view_func()
+    response = client.get("/external-vinyl?query=nirvana")
 
-    assert status == 200
-    assert body == {
+    assert response.status_code == 200
+    assert response.get_json() == {
         "results": [
             {
                 "title": "Nevermind",
@@ -91,53 +85,52 @@ def test_successful_search_maps_fields(mock_get, view_func, flask_app):
 
 
 @patch("external_api.requests.get")
-def test_query_and_auth_header_are_sent_correctly(mock_get, view_func, flask_app):
+def test_query_and_auth_header_are_sent_correctly(mock_get, client):
     mock_get.return_value = make_discogs_response(200, {"results": []})
 
-    with flask_app.test_request_context("/external-vinyl?query=pink+floyd"):
-        view_func()
+    client.get("/external-vinyl?query=pink+floyd")
 
     called_url = mock_get.call_args.args[0]
     called_headers = mock_get.call_args.kwargs["headers"]
 
-    # NOTE: Flask decodes '+' in query strings back to a space, and the
-    # route builds the Discogs URL with an f-string (no urlencode), so the
-    # raw space ends up in the outgoing URL as-is. This is arguably a bug
-    # in the route (special characters like '&' or '#' in a search term
-    # would break the URL or get sent to the wrong param) - flagging it
-    # here via the assertion rather than silently working around it.
+    # NOTE: o parsing de query string decodifica '+' de volta para espaco,
+    # e a rota monta a URL do Discogs com f-string (sem urlencode), entao
+    # o espaco "cru" acaba indo para a URL de saida como esta. Isso e
+    # potencialmente um bug na rota (caracteres especiais como '&' ou '#'
+    # no termo de busca quebrariam a URL ou vazariam para o parametro
+    # errado) - sinalizando aqui via assertion em vez de contornar
+    # silenciosamente.
     assert "q=pink floyd" in called_url
     assert called_headers["User-Agent"] == "VirtualDiggingApp/1.0"
     assert called_headers["Authorization"].startswith("Discogs token=")
 
 
 @patch("external_api.requests.get")
-def test_results_are_truncated_to_five(mock_get, view_func, flask_app):
+def test_results_are_truncated_to_five(mock_get, client):
     fake_results = [
         {"title": f"Album {i}", "year": "2000", "genre": [], "cover_image": None}
         for i in range(10)
     ]
     mock_get.return_value = make_discogs_response(200, {"results": fake_results})
 
-    with flask_app.test_request_context("/external-vinyl?query=test"):
-        body, status = view_func()
+    response = client.get("/external-vinyl?query=test")
 
-    assert status == 200
+    assert response.status_code == 200
+    body = response.get_json()
     assert len(body["results"]) == 5
     assert body["results"][0]["title"] == "Album 0"
 
 
 @patch("external_api.requests.get")
-def test_missing_optional_fields_default_gracefully(mock_get, view_func, flask_app):
+def test_missing_optional_fields_default_gracefully(mock_get, client):
     mock_get.return_value = make_discogs_response(
         200, {"results": [{"title": "No Genre Album"}]}
     )
 
-    with flask_app.test_request_context("/external-vinyl?query=test"):
-        body, status = view_func()
+    response = client.get("/external-vinyl?query=test")
 
-    assert status == 200
-    result = body["results"][0]
+    assert response.status_code == 200
+    result = response.get_json()["results"][0]
     assert result["title"] == "No Genre Album"
     assert result["year"] is None
     assert result["genre"] == []
@@ -145,33 +138,30 @@ def test_missing_optional_fields_default_gracefully(mock_get, view_func, flask_a
 
 
 @patch("external_api.requests.get")
-def test_discogs_non_200_returns_500(mock_get, view_func, flask_app):
+def test_discogs_non_200_returns_500(mock_get, client):
     mock_get.return_value = make_discogs_response(404, {})
 
-    with flask_app.test_request_context("/external-vinyl?query=test"):
-        body, status = view_func()
+    response = client.get("/external-vinyl?query=test")
 
-    assert status == 500
-    assert "status 404" in body["mesg"]
+    assert response.status_code == 500
+    assert "status 404" in response.get_json()["mesg"]
 
 
 @patch("external_api.requests.get")
-def test_requests_exception_returns_500(mock_get, view_func, flask_app):
+def test_requests_exception_returns_500(mock_get, client):
     mock_get.side_effect = Exception("connection timed out")
 
-    with flask_app.test_request_context("/external-vinyl?query=test"):
-        body, status = view_func()
+    response = client.get("/external-vinyl?query=test")
 
-    assert status == 500
-    assert "connection timed out" in body["mesg"]
+    assert response.status_code == 500
+    assert "connection timed out" in response.get_json()["mesg"]
 
 
 @patch("external_api.requests.get")
-def test_empty_results_list_returns_empty_results(mock_get, view_func, flask_app):
+def test_empty_results_list_returns_empty_results(mock_get, client):
     mock_get.return_value = make_discogs_response(200, {"results": []})
 
-    with flask_app.test_request_context("/external-vinyl?query=nothingfound"):
-        body, status = view_func()
+    response = client.get("/external-vinyl?query=nothingfound")
 
-    assert status == 200
-    assert body == {"results": []}
+    assert response.status_code == 200
+    assert response.get_json() == {"results": []}

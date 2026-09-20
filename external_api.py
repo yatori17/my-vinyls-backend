@@ -1,6 +1,6 @@
 import os
 import requests
-from flask import request, jsonify
+from schemas import *
 
 DISCOGS_TOKEN = os.getenv("DISCOGS_TOKEN", "")
 
@@ -9,16 +9,13 @@ if not DISCOGS_TOKEN:
 
 def init_external_routes(app, vinyl_tag, ErrorSchema, ListExternalVinylSchema):
 
-
     @app.get('/external-vinyl', tags=[vinyl_tag], responses={"200": ListExternalVinylSchema, "400": ErrorSchema, "500": ErrorSchema})
-    def search_external_vinyl():
+    def search_external_vinyl(query: VinylSearchQuery):
         """Busca discos na API externa do Discogs pelo nome do álbum ou artista."""
-        query = request.args.get('query', '')
-        if not query:
-            return {"mesg": "Query parameter is required"}, 400
+        search_term = query.query
 
-        url = f"https://api.discogs.com/database/search?q={query}&type=release"
-        
+        url = f"https://api.discogs.com/database/search?q={search_term}&type=release"
+
         headers = {
             "User-Agent": "VirtualDiggingApp/1.0",
             "Authorization": f"Discogs token={DISCOGS_TOKEN}"
@@ -26,12 +23,12 @@ def init_external_routes(app, vinyl_tag, ErrorSchema, ListExternalVinylSchema):
 
         try:
             response = requests.get(url, headers=headers)
-            
+
             if response.status_code != 200:
                 return {"mesg": f"Error fetching data from Discogs: status {response.status_code}"}, 500
 
             data = response.json()
-            
+
             results = []
             for item in data.get('results', [])[:5]:
                 results.append({

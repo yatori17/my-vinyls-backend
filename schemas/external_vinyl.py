@@ -10,3 +10,6 @@ class ExternalVinylViewSchema(BaseModel):
 
 class ListExternalVinylSchema(BaseModel):
     results: list[ExternalVinylViewSchema]
+
+class VinylSearchQuery(BaseModel):
+    query: str = Field(..., description="Nome do álbum ou artista para buscar no Discogs")
