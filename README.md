@@ -7,7 +7,7 @@ API REST desenvolvida em Flask para gerenciamento de uma coleção pessoal de vi
 ```mermaid
 flowchart LR
     subgraph Browser
-        A[Interface Front-End<br/>Angular + Nginx]
+        A[Interface Front-End<br/>Angular]
     end
 
     subgraph Backend Container
